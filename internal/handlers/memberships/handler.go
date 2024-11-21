@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sgitwhyd/cangkruan-api/internal/model/memberships"
-	model "github.com/sgitwhyd/cangkruan-api/internal/service/memberships"
+	model "github.com/sgitwhyd/cangkruan-api/internal/model"
+	service "github.com/sgitwhyd/cangkruan-api/internal/service/memberships"
 )
 
 type Handler struct {
 	*gin.Engine
-	membershipSvc model.MembershipService
+	membershipSvc service.MembershipService
 }
 
-func NewHandler(api *gin.Engine, membershipSvc model.MembershipService) *Handler {
+func NewHandler(api *gin.Engine, membershipSvc service.MembershipService) *Handler {
 	return &Handler{
 		Engine: api,
 		membershipSvc: membershipSvc,
@@ -24,7 +24,7 @@ func NewHandler(api *gin.Engine, membershipSvc model.MembershipService) *Handler
 func (h *Handler) SignUp(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	var request memberships.SignUpRequest
+	var request model.SignUpRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Print("request body not fill up")
 		c.JSON(http.StatusBadRequest, gin.H{

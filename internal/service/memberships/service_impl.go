@@ -6,11 +6,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/sgitwhyd/cangkruan-api/internal/model/memberships"
+	model "github.com/sgitwhyd/cangkruan-api/internal/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *service) SignUp(ctx context.Context, req memberships.SignUpRequest) error {
+func (s *service) SignUp(ctx context.Context, req model.SignUpRequest) error {
 	user, err := s.repository.GetUser(ctx, req.Email, req.Username)
 	if err != nil {
 		log.Printf("error create user %+v", err)
@@ -27,7 +27,7 @@ func (s *service) SignUp(ctx context.Context, req memberships.SignUpRequest) err
 	}
 
 	now := time.Now()
-	model := memberships.UserModel{
+	model := model.UserModel{
 		Username: req.Username,
 		Email    : req.Email,
 		Password : string(hashedPassword),

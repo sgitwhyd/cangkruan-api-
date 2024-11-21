@@ -3,7 +3,7 @@ package memberships
 import (
 	"context"
 
-	model "github.com/sgitwhyd/cangkruan-api/internal/model/memberships"
+	model "github.com/sgitwhyd/cangkruan-api/internal/model"
 	"github.com/sgitwhyd/cangkruan-api/internal/repository/memberships"
 )
 

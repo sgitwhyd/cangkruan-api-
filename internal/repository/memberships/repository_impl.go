@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/sgitwhyd/cangkruan-api/internal/model/memberships"
+	memberships "github.com/sgitwhyd/cangkruan-api/internal/model"
 )
 
 type Repository interface {
