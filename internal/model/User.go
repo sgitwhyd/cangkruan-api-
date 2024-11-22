@@ -9,6 +9,15 @@ type (
 		Password string `json:"password" binding:"required"`
 	}
 
+	SignInRequest struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	SignInResponse struct {
+		AccessToken string `json:"access_token"`
+	}
+
 	UserModel struct {
 		ID        int64 `db:"id"`
 		Username 	string `db:"username"`
