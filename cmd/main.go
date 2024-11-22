@@ -5,15 +5,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sgitwhyd/cangkruan-api/internal/configs"
+	"github.com/sgitwhyd/cangkruan-api/internal/handlers"
 	"github.com/sgitwhyd/cangkruan-api/internal/handlers/memberships"
+	"github.com/sgitwhyd/cangkruan-api/internal/repository"
 	membershipRepo "github.com/sgitwhyd/cangkruan-api/internal/repository/memberships"
+	"github.com/sgitwhyd/cangkruan-api/internal/service"
 	membershipSvc "github.com/sgitwhyd/cangkruan-api/internal/service/memberships"
 	"github.com/sgitwhyd/cangkruan-api/pkg/internalsql"
 )
 
 func main() {
 	r := gin.Default()
-
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 	var cfg *configs.Config
 
 	err := configs.Init(
@@ -35,11 +39,16 @@ func main() {
 		log.Fatal("gagal inisiasi database", err)
 	}
 
+	postRepo := repository.NewPostRepository(db)
+
+	postScv := service.NewPostService(postRepo)
+	postHandler := handlers.NewPostHandler(r, postScv)
 	membershipRepository := membershipRepo.NewRepository(db)
 	membershipSvc := membershipSvc.NewService(cfg, membershipRepository)
 	membershipHandler := memberships.NewHandler(r, membershipSvc)
 
 	membershipHandler.RegisterRoute()
+	postHandler.RegisterRoute()
 
 	r.Run(cfg.Service.Port) // listen and serve on 0.0.0.0:8080
 }

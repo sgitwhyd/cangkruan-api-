@@ -1,11 +1,11 @@
 package middlewares
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 	"github.com/sgitwhyd/cangkruan-api/internal/configs"
 	"github.com/sgitwhyd/cangkruan-api/pkg/jwt"
 )
@@ -17,16 +17,18 @@ func AuthMiddleware() gin.HandlerFunc {
 		header :=  ctx.Request.Header.Get("Authorization")
 		header = strings.TrimSpace(header)
 		if header == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": errors.New("invalid token"),
+			log.Error().Msg("Unauthorize request")
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "token not provided",
 			})
-			return
+			return 
 		}
 
 		userID, username, err := jwt.ValidateToken(header, secretKey)
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": errors.New("invalid token"),
+			log.Error().Msg("Token Invalid")
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "invalid token",
 			})
 			return
 		}
