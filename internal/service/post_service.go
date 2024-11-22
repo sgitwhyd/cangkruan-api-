@@ -11,14 +11,14 @@ import (
 )
 
 type service struct {
-	repository repository.Repository
+	repository repository.PostRepository
 }
 
 type PostService interface {
 	Save(ctx context.Context, req model.CreatePostRequest, userID int64) error
 }
 
-func NewPostService(repository repository.Repository) *service {
+func NewPostService(repository repository.PostRepository) *service {
 	return &service{repository: repository}
 }
 

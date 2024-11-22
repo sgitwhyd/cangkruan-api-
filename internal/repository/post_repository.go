@@ -7,21 +7,21 @@ import (
 	"github.com/sgitwhyd/cangkruan-api/internal/model"
 )
 
-type repository struct {
+type postRepository struct {
 	db *sql.DB
 }
 
-type Repository interface {
+type PostRepository interface {
 	Create(ctx context.Context, req model.PostModel) error
 }
 
-func NewPostRepository(db *sql.DB) *repository {
-	return &repository{
+func NewPostRepository(db *sql.DB) *postRepository {
+	return &postRepository{
 		db: db,
 	}
 }
 
-func (r *repository) Create(ctx context.Context, req model.PostModel) error {
+func (r *postRepository) Create(ctx context.Context, req model.PostModel) error {
 	
 
 	query := `INSERT INTO posts (title, content, hashtags, user_id, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
