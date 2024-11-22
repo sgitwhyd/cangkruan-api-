@@ -3,10 +3,11 @@ package memberships
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	model "github.com/sgitwhyd/cangkruan-api/internal/model"
+	"github.com/sgitwhyd/cangkruan-api/pkg/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -43,5 +44,31 @@ func (s *service) SignUp(ctx context.Context, req model.SignUpRequest) error {
 	}
 
 	return nil
+
+}
+
+func (s *service) SignIn(ctx context.Context, req model.SignInRequest) (string, error) {
+	user, err := s.repository.GetUser(ctx, req.Email, "")
+	if err != nil {
+		log.Error().Err(err).Msg("failed get user")
+		return "", nil
+	}
+
+	if user == nil {
+		return "", errors.New("email not exist")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		return "", errors.New("email or password is invalid")
+	}
+
+	token, err := jwt.CreateToken(user.ID, user.Username, s.cfg.Service.SecretJWT)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+
 
 }

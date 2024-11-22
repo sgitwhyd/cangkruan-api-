@@ -49,8 +49,35 @@ func (h *Handler) SignUp(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
+func (h *Handler) SignIn(c *gin.Context){
+	ctx := c.Request.Context()
+
+	var body model.SignInRequest
+	err := c.ShouldBindJSON(&body)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	token, err := h.membershipSvc.SignIn(ctx, body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	data := &model.SignInResponse{
+		AccessToken: token,
+	}
+	c.JSON(http.StatusOK, data)
+}
+
 func (h *Handler) RegisterRoute(){
 	route := h.Group("memberships")
 
 	route.POST("/signup", h.SignUp)
+	route.POST("/signin", h.SignIn)
 }
