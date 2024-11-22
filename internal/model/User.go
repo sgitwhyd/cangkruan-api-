@@ -1,4 +1,4 @@
-package memberships
+package model
 
 import "time"
 
