@@ -1,4 +1,5 @@
 service:
   port: ":9876"
+  secretJWT: "verysecret"
 database:
   dataSourceName: "root:secret@tcp(localhost:3306)/fs_forum_api?parseTime=true"
