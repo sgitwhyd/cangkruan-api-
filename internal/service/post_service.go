@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sgitwhyd/cangkruan-api/internal/model"
 	"github.com/sgitwhyd/cangkruan-api/internal/repository"
 )
@@ -16,6 +17,7 @@ type service struct {
 
 type PostService interface {
 	Save(ctx context.Context, req model.CreatePostRequest, userID int64) error
+	FindByID(ctx context.Context, postID int64) (*model.PostModel, error)
 }
 
 func NewPostService(repository repository.PostRepository) *service {
@@ -44,4 +46,15 @@ func (s *service) Save(ctx context.Context, req model.CreatePostRequest, userID 
 	}
 
 	return nil
+}
+
+func (s *service) FindByID(ctx context.Context, postID int64) (*model.PostModel, error) {
+	post, err := s.repository.FindByID(ctx, postID)
+	if err != nil {
+		log.Error().Err(err).Msgf("post with id %d not found", postID)
+		return nil, err
+	}
+
+	return post, nil
+
 }
