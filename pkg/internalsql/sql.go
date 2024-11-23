@@ -14,5 +14,10 @@ func Connect(dataSourceName string) (*sql.DB, error) {
 		return nil, err
 	}
 
+	if err := db.Ping(); err != nil {
+		log.Printf("error connecting to database: %+v\n", err)
+		return nil, err
+	}
+
 	return db, nil
 }
