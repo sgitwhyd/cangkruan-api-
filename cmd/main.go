@@ -15,10 +15,7 @@ import (
 )
 
 func main() {
-	r := gin.Default()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-	var cfg *configs.Config
+
 
 	err := configs.Init(
 		configs.WithConfigFolder([]string{"./internal/configs"}),
@@ -28,25 +25,42 @@ func main() {
 
 	if err != nil {
 		log.Fatal("Gagal inisiasi config", err)
+		return
 	}
 
-	cfg = configs.Get()
+	
+	cfg := configs.Get()
 	log.Println(cfg)
-
 
 	db, err := internalsql.Connect(cfg.Database.DataSourceName)
 	if err != nil {
 		log.Fatal("gagal inisiasi database", err)
+		return
 	}
 
-	postRepo := repository.NewPostRepository(db)
+	defer db.Close()
+	
+	log.Println("db connected")
 
-	postScv := service.NewPostService(postRepo)
-	postHandler := handlers.NewPostHandler(r, postScv)
+	r := gin.Default()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+
+
+
+	postRepo := repository.NewPostRepository(db)
+	commentRepo := repository.NewCommentRepository(db)
 	membershipRepository := membershipRepo.NewRepository(db)
+
+	commentScv := service.NewCommentService(commentRepo)
+	postScv := service.NewPostService(postRepo)
 	membershipSvc := membershipSvc.NewService(cfg, membershipRepository)
+
+	commenHandler  := handlers.NewCommentHandler(r, commentScv, postScv)
+	postHandler := handlers.NewPostHandler(r, postScv)
 	membershipHandler := memberships.NewHandler(r, membershipSvc)
 
+	commenHandler.RegisterRoute()
 	membershipHandler.RegisterRoute()
 	postHandler.RegisterRoute()
 
