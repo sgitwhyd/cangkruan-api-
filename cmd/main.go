@@ -51,18 +51,22 @@ func main() {
 	postRepo := repository.NewPostRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
 	membershipRepository := membershipRepo.NewRepository(db)
+	userActRepo := repository.NewUserActivityRepository(db)
 
 	commentScv := service.NewCommentService(commentRepo)
 	postScv := service.NewPostService(postRepo)
 	membershipSvc := membershipSvc.NewService(cfg, membershipRepository)
+	userActSvc := service.NewUserActivityService(userActRepo)
 
 	commenHandler  := handlers.NewCommentHandler(r, commentScv, postScv)
 	postHandler := handlers.NewPostHandler(r, postScv)
 	membershipHandler := memberships.NewHandler(r, membershipSvc)
+	userActHandler := handlers.NewUserActHandler(r, userActSvc)
 
 	commenHandler.RegisterRoute()
 	membershipHandler.RegisterRoute()
 	postHandler.RegisterRoute()
+	userActHandler.RegisterRoute()
 
 	r.Run(cfg.Service.Port) // listen and serve on 0.0.0.0:8080
 }
