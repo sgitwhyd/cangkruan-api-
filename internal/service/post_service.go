@@ -18,6 +18,7 @@ type service struct {
 type PostService interface {
 	Save(ctx context.Context, req model.CreatePostRequest, userID int64) error
 	FindByID(ctx context.Context, postID int64) (*model.PostModel, error)
+	FindAll(ctx context.Context, pageSize, pageIndex int) (model.GetAllPostResponse, error)
 }
 
 func NewPostService(repository repository.PostRepository) *service {
@@ -57,4 +58,16 @@ func (s *service) FindByID(ctx context.Context, postID int64) (*model.PostModel,
 
 	return post, nil
 
+}
+
+func (s *service) FindAll(ctx context.Context, pageSize, pageIndex int) (model.GetAllPostResponse, error) {
+	limit := pageSize
+	offset := pageSize * (pageIndex - 1)
+	posts, err := s.repository.GetAll(ctx, limit, offset)
+	if err != nil {
+		log.Error().Err(err).Msg("service: error get all posts")
+		return posts, err
+	}
+
+	return posts, err
 }

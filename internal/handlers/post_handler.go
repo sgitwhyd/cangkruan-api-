@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -20,6 +21,50 @@ func NewPostHandler(api *gin.Engine, postService service.PostService) *handler {
 		Engine:        api,
 		postService: postService,
 	}
+}
+
+func (h *handler) Get(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	pageSizeStr := c.Query("pageSize")
+	pageStr := c.Query("page")
+
+	if pageSizeStr == "" || pageStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+			"error": "need page and page size param",
+		})
+		return
+	}
+
+	limit, err := strconv.Atoi(pageSizeStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error",
+		})
+		return
+	}
+
+	offset, err := strconv.Atoi(pageStr)
+		if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error",
+		})
+		return
+	}
+
+
+
+	posts, err := h.postService.FindAll(ctx, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return 
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": posts,
+	})
 }
 
 func (h *handler) Make(c *gin.Context) {
@@ -55,4 +100,5 @@ func (h *handler) RegisterRoute(){
 	route.Use(middlewares.AuthMiddleware())
 
 	route.POST("/", h.Make)
+	h.GET("/posts", h.Get)
 }

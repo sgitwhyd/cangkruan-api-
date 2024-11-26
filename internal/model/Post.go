@@ -21,3 +21,27 @@ type (
 		Hashtags    []string    `json:"hashtags" binding:"required"`
 	}
 )
+
+type (
+	GetAllPostResponse struct {
+		Posts []Post `json: "data"`
+		Pagination Pagination `json:"pagination"`
+	}
+
+	Post struct {
+		ID        int64       	`json:"id"`
+		UserID    int64       	`json:"user_id"`
+		Username 	string				`json:"username"`
+		Title     string    		`json:"title"`
+		Content   string    		`json:"content"`
+		Hashtags  []string    	`json:"hashtags"`
+	}
+
+	Pagination struct {
+		Limit 				int `json:"limit"`
+		Offset 				int `json:"offset"`
+		Page					int `json:"page"`
+		TotalPages		int `json:"total_pages"`
+		TotalItems		int `json:"total_items"`
+	}
+)
