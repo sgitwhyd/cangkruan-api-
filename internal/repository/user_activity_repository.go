@@ -17,6 +17,7 @@ type UserActRepository interface {
 	Find(ctx context.Context, userAct model.UserActivityModel) (*model.UserActivityModel, error)
 	Create(ctx context.Context, userAct model.UserActivityModel) error
 	Update(ctx context.Context, userAct model.UserActivityModel) error
+	CountLikeByID(ctx context.Context, postID int64) (int64, error)
 }
 
 func NewUserActivityRepository(db *sql.DB) *userActRepository {
@@ -72,4 +73,21 @@ func (r *userActRepository) Update(ctx context.Context, userAct model.UserActivi
 	}
 
 	return nil
+}
+
+func (r *userActRepository) CountLikeByID(ctx context.Context, postID int64) (int64, error) {
+	query := `SELECT count(*) AS "like" FROM user_activities WHERE post_id = ? AND is_liked = 1`
+
+	var like int64
+	row := r.db.QueryRowContext(ctx, query, postID)
+	
+	err := row.Scan(&like)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, err
+		}
+		return 0, err
+	}
+
+	return like, nil
 }
