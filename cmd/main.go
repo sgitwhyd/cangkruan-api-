@@ -54,7 +54,7 @@ func main() {
 	userActRepo := repository.NewUserActivityRepository(db)
 
 	commentScv := service.NewCommentService(commentRepo)
-	postScv := service.NewPostService(postRepo)
+	postScv := service.NewPostService(postRepo, commentRepo, userActRepo)
 	membershipSvc := membershipSvc.NewService(cfg, membershipRepository)
 	userActSvc := service.NewUserActivityService(userActRepo)
 

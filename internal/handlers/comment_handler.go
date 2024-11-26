@@ -38,7 +38,8 @@ func (h commentHandler) Make(c *gin.Context) {
 		return
 	}
 
-	_, err = h.postSvc.FindByID(ctx, postID)
+	userID := c.GetInt64("userID")
+	_, err = h.postSvc.FindByID(ctx, userID, postID)
 	if err != nil {
 		data := gin.H{
 			"error": err.Error(),
@@ -56,9 +57,7 @@ func (h commentHandler) Make(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, data)
 		return
 	}
-
-	userID := c.MustGet("userID").(int64)
-
+	
 	err = h.service.Save(postID, ctx, body, userID)
 	if err != nil {
 		data := gin.H{

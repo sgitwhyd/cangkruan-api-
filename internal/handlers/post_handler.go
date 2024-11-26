@@ -93,12 +93,40 @@ func (h *handler) Make(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"result": "Post Created",
 	})
-}	
+}
+
+func (h *handler) Find(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	postIDStr := c.Param("post_id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error",
+		})
+		return
+	}
+
+	userID := c.GetInt64("userID")
+	posts, err := h.postService.FindByID(ctx,userID, int64(postID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return 
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": posts,
+	})
+
+}
 
 func (h *handler) RegisterRoute(){
 	route := h.Group("posts")
 	route.Use(middlewares.AuthMiddleware())
 
 	route.POST("/", h.Make)
+	route.GET("/:post_id", h.Find)
 	h.GET("/posts", h.Get)
 }

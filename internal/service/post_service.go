@@ -13,16 +13,19 @@ import (
 
 type service struct {
 	repository repository.PostRepository
+	commentRepo repository.CommentRepository
+	userActRepo repository.UserActRepository
 }
 
 type PostService interface {
 	Save(ctx context.Context, req model.CreatePostRequest, userID int64) error
-	FindByID(ctx context.Context, postID int64) (*model.PostModel, error)
+	FindByID(ctx context.Context, userID, postID int64) (*model.GetPostResponse, error)
 	FindAll(ctx context.Context, pageSize, pageIndex int) (model.GetAllPostResponse, error)
 }
 
-func NewPostService(repository repository.PostRepository) *service {
-	return &service{repository: repository}
+func NewPostService(repository repository.PostRepository, commentRepo repository.CommentRepository,
+	userActRepo repository.UserActRepository) *service {
+	return &service{repository: repository, commentRepo: commentRepo, userActRepo: userActRepo}
 }
 
 func (s *service) Save(ctx context.Context, req model.CreatePostRequest, userID int64) error {
@@ -49,14 +52,32 @@ func (s *service) Save(ctx context.Context, req model.CreatePostRequest, userID 
 	return nil
 }
 
-func (s *service) FindByID(ctx context.Context, postID int64) (*model.PostModel, error) {
-	post, err := s.repository.FindByID(ctx, postID)
+func (s *service) FindByID(ctx context.Context, userID, postID int64) (*model.GetPostResponse, error) {
+	post, err := s.repository.FindByID(ctx,userID, postID)
 	if err != nil {
-		log.Error().Err(err).Msgf("post with id %d not found", postID)
+		log.Error().Err(err).Msgf("service: post with id %d not found", postID)
 		return nil, err
 	}
 
-	return post, nil
+	comments, err := s.commentRepo.GetCommentByPostID(ctx, postID)
+	if err != nil {
+		log.Error().Err(err).Msgf("service: comment with post_id %d not found", postID)
+		return nil, err
+	}
+
+	like, err := s.userActRepo.CountLikeByID(ctx, postID)
+	if err != nil {
+		log.Error().Err(err).Msgf("service: like with post_id %d not found", postID)
+		return nil, err
+	}
+
+	response := &model.GetPostResponse{
+		Post: *post,
+		LikeCount: int(like),
+		Comments: comments,
+	}
+
+	return response, nil
 
 }
 
