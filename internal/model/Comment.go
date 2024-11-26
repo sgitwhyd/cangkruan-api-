@@ -17,4 +17,10 @@ type (
 	CreateCommentRequest struct {
 		Content   string    `json:"content" binding:"required"`
 	}
+
+	Comment struct {
+		ID  int64 `json:"id"`
+		Content string `json:"content"`
+		CreatedBy string `json:"created_by"`
+	}
 )
