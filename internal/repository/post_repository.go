@@ -17,7 +17,7 @@ type postRepository struct {
 type PostRepository interface {
 	GetAll(ctx context.Context, limit int, offset int)(model.GetAllPostResponse, error) 
 	Create(ctx context.Context, req model.PostModel) error
-	FindByID(ctx context.Context, postID int64) (*model.PostModel, error)
+	FindByID(ctx context.Context, userID, postID int64) (*model.Post, error)
 }
 
 func NewPostRepository(db *sql.DB) *postRepository {
@@ -61,7 +61,6 @@ func (r *postRepository) GetAll(ctx context.Context, limit int, offset int)(mode
 		result = append(result, model.Post{
 			ID: post.ID,
 			Title: post.Title,
-			UserID: post.UserID,
 			Username: username,
 			Content: post.Content,
 			Hashtags: strings.Split(post.Hashtags, ","),
@@ -93,18 +92,52 @@ return nil
 
 }
 
-func (r *postRepository) FindByID(ctx context.Context, postID int64) (*model.PostModel, error) {
-	query := `SELECT id, user_id, title, content, hashtags, created_at, updated_at, created_by, updated_by FROM posts WHERE id = ?`
-	row := r.db.QueryRowContext(ctx, query, postID)
+func (r *postRepository) FindByID(ctx context.Context, userID, postID int64) (*model.Post, error) {
+	query := `
+			SELECT 
+				posts.id, 
+				posts.title, 
+				posts.content, 
+				posts.hashtags, 
+				posts.created_at, 
+				posts.updated_at, 
+				posts.created_by, 
+				posts.updated_by, 
+				users.username,
+				COALESCE(user_activities.is_liked, 0) AS is_liked
+		FROM 
+				posts
+		JOIN 
+				users ON posts.user_id = users.id
+		LEFT JOIN 
+				user_activities 
+				ON user_activities.post_id = posts.id 
+				AND user_activities.user_id = ?
+		WHERE 
+				posts.id = ?;
+	`
+	row := r.db.QueryRowContext(ctx, query, userID, postID)
 
-	var post model.PostModel
-	err := row.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Hashtags, &post.CreatedAt, &post.UpdatedAt, &post.CreatedBy, &post.UpdatedBy)
+	var (
+		post model.PostModel
+		username string
+		isLiked bool
+	)
+	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.Hashtags, &post.CreatedAt, &post.UpdatedAt, &post.CreatedBy, &post.UpdatedBy, &username, &isLiked)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("post with ID %d not found", postID)
 		}
 		return nil, err
 	}
-
-	return &post, err
+	
+	log.Info().Msgf("Get post detail by post_id: %d, user_id: %d", postID, userID)
+	return &model.Post{
+		ID: post.ID,
+		Username: username,
+		Title: post.Title,
+		Content: post.Content,
+		Hashtags: strings.Split(post.Hashtags, ","),
+		IsLike: isLiked,
+	} , err
 }
