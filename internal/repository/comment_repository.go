@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sgitwhyd/cangkruan-api/internal/model"
@@ -10,6 +11,7 @@ import (
 
 type CommentRepository interface {
 	Create(ctx context.Context, model model.CommentModel) error
+	GetCommentByPostID(ctx context.Context, postID int64) ([]model.Comment, error)
 }
 
 type commentRepository struct {
@@ -29,4 +31,44 @@ func (r commentRepository) Create(ctx context.Context, model model.CommentModel)
 	}
 
 	return nil
+}
+
+func (r commentRepository) GetCommentByPostID(ctx context.Context, postID int64) ([]model.Comment, error) {
+
+	comments := make([]model.Comment, 0)
+	query := `SELECT c.id, c.content, u.username  FROM comments c JOIN users u ON c.user_id = u.id WHERE c.post_id = ?`
+
+	rows, err := r.db.QueryContext(ctx, query, postID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return comments, fmt.Errorf("comment not found")
+		}
+		return comments, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			comment model.CommentModel
+			username string
+		)
+
+		err := rows.Scan(&comment.ID, &comment.Content, &username)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				return comments, err
+			}
+
+			return comments, err
+		}
+
+		comments = append(comments, model.Comment{
+			ID: comment.ID,
+			Content: comment.Content,
+			CreatedBy: username,
+		})
+	}
+
+	return comments, nil
 }
