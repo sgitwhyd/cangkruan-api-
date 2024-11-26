@@ -24,17 +24,17 @@ type (
 
 type (
 	GetAllPostResponse struct {
-		Posts []Post `json: "data"`
+		Posts []Post `json:"posts"`
 		Pagination Pagination `json:"pagination"`
 	}
 
 	Post struct {
 		ID        int64       	`json:"id"`
-		UserID    int64       	`json:"user_id"`
 		Username 	string				`json:"username"`
 		Title     string    		`json:"title"`
 		Content   string    		`json:"content"`
 		Hashtags  []string    	`json:"hashtags"`
+		IsLike		bool 					`json:"is_like"`
 	}
 
 	Pagination struct {
@@ -44,4 +44,11 @@ type (
 		TotalPages		int `json:"total_pages"`
 		TotalItems		int `json:"total_items"`
 	}
+
+	GetPostResponse struct {
+		Post		Post `json:"post"`
+		LikeCount 		int `json:"like_count"`
+		Comments			[]Comment `json:"comments"`
+	}
+
 )
