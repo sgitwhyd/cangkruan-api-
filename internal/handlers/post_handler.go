@@ -12,13 +12,13 @@ import (
 )
 
 type handler struct {
-	*gin.Engine
+	*gin.RouterGroup
 	postService service.PostService
 }
 
-func NewPostHandler(api *gin.Engine, postService service.PostService) *handler {
+func NewPostHandler(api *gin.RouterGroup, postService service.PostService) *handler {
 	return &handler{
-		Engine:        api,
+		RouterGroup:        api,
 		postService: postService,
 	}
 }

@@ -12,14 +12,14 @@ import (
 )
 
 type commentHandler struct {
-	*gin.Engine
+	*gin.RouterGroup
 	service service.CommentService
 	postSvc service.PostService
 }
 
-func NewCommentHandler(api *gin.Engine, service service.CommentService, postSvc service.PostService) *commentHandler {
+func NewCommentHandler(api *gin.RouterGroup, service service.CommentService, postSvc service.PostService) *commentHandler {
 	return &commentHandler{
-		Engine: api,
+		RouterGroup: api,
 		service: service,
 		postSvc: postSvc,
 	}

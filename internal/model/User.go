@@ -40,10 +40,10 @@ type (
 	}
 
 	RefreshTokenRequest struct {
-		Token string `json:"token"`
+		RefreshToken string `json:"refresh_token" binding:"required"`
 	}
 
 	RefreshTokenResponse struct {
-		AccessToken string `json:"access_token"`
+		AccessToken string `json:"access_token" binding:"required"`
 	}
 )

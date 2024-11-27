@@ -1,4 +1,4 @@
-package memberships
+package service
 
 import (
 	"context"
@@ -6,13 +6,30 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	model "github.com/sgitwhyd/cangkruan-api/internal/model"
+	"github.com/sgitwhyd/cangkruan-api/internal/configs"
+	"github.com/sgitwhyd/cangkruan-api/internal/model"
+	"github.com/sgitwhyd/cangkruan-api/internal/repository"
 	"github.com/sgitwhyd/cangkruan-api/pkg/jwt"
 	tokenUtils "github.com/sgitwhyd/cangkruan-api/pkg/token"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *service) SignUp(ctx context.Context, req model.SignUpRequest) error {
+type authService struct {
+	cfg *configs.Config
+	repository repository.UserRepository
+}
+
+type AuthService interface {
+	SignUp(ctx context.Context, req model.SignUpRequest) error
+	SignIn(ctx context.Context, req model.SignInRequest) (string, string, error)
+	ValidateRefreshToken(ctx context.Context, userID int64, request model.RefreshTokenRequest) (string, error)
+}
+
+func NewAuthService(cfg *configs.Config, userRepo repository.UserRepository) *authService {
+	return &authService{cfg, userRepo}
+}
+
+func (s *authService) SignUp(ctx context.Context, req model.SignUpRequest) error {
 	user, err := s.repository.GetUser(ctx, req.Email, req.Username, 0)
 	if err != nil {
 		log.Printf("error create user %+v", err)
@@ -48,7 +65,7 @@ func (s *service) SignUp(ctx context.Context, req model.SignUpRequest) error {
 
 }
 
-func (s *service) SignIn(ctx context.Context, req model.SignInRequest) (string, string, error) {
+func (s *authService) SignIn(ctx context.Context, req model.SignInRequest) (string, string, error) {
 	user, err := s.repository.GetUser(ctx, req.Email, "", 0)
 	if err != nil {
 		log.Error().Err(err).Msg("failed get user")
@@ -101,7 +118,7 @@ func (s *service) SignIn(ctx context.Context, req model.SignInRequest) (string, 
 	return token, refreshToken, nil
 }
 
-func (s *service) ValidateRefreshToken(ctx context.Context, userID int64, request model.RefreshTokenRequest) (string, error) {
+func (s *authService) ValidateRefreshToken(ctx context.Context, userID int64, request model.RefreshTokenRequest) (string, error) {
 	exRefreshToken, err := s.repository.GetRefreshToken(ctx, userID)
 	if err != nil {
 		log.Error().Err(err).Msgf("service: failed get refresh token user_id: %d", userID)
@@ -112,7 +129,7 @@ func (s *service) ValidateRefreshToken(ctx context.Context, userID int64, reques
 		return "", errors.New("refresh token has expired")
 	}
 
-	if request.Token != exRefreshToken.RefreshToken {
+	if request.RefreshToken != exRefreshToken.RefreshToken {
 		return "", errors.New("refresh token is invalid")
 	}
 

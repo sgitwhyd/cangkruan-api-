@@ -6,17 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sgitwhyd/cangkruan-api/internal/configs"
 	"github.com/sgitwhyd/cangkruan-api/internal/handlers"
-	"github.com/sgitwhyd/cangkruan-api/internal/handlers/memberships"
 	"github.com/sgitwhyd/cangkruan-api/internal/repository"
-	membershipRepo "github.com/sgitwhyd/cangkruan-api/internal/repository/memberships"
 	"github.com/sgitwhyd/cangkruan-api/internal/service"
-	membershipSvc "github.com/sgitwhyd/cangkruan-api/internal/service/memberships"
 	"github.com/sgitwhyd/cangkruan-api/pkg/internalsql"
 )
 
+// BasePath /api/v1
 func main() {
-
-
 	err := configs.Init(
 		configs.WithConfigFolder([]string{"./internal/configs"}),
 		configs.WithConfigFile("config"),
@@ -43,25 +39,25 @@ func main() {
 	log.Println("db connected")
 
 	r := gin.Default()
+	route:= r.Group("/api/v1/")
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-
-
+	
 	postRepo := repository.NewPostRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
-	membershipRepository := membershipRepo.NewRepository(db)
+	userRepo := repository.NewUserRepository(db)
 	userActRepo := repository.NewUserActivityRepository(db)
 
-	commentScv := service.NewCommentService(commentRepo)
-	postScv := service.NewPostService(postRepo, commentRepo, userActRepo)
-	membershipSvc := membershipSvc.NewService(cfg, membershipRepository)
+	commentSvc := service.NewCommentService(commentRepo)
+	postSvc := service.NewPostService(postRepo, commentRepo, userActRepo)
+	authSvc := service.NewAuthService(cfg, userRepo)
 	userActSvc := service.NewUserActivityService(userActRepo)
 
-	commenHandler  := handlers.NewCommentHandler(r, commentScv, postScv)
-	postHandler := handlers.NewPostHandler(r, postScv)
-	membershipHandler := memberships.NewHandler(r, membershipSvc)
-	userActHandler := handlers.NewUserActHandler(r, userActSvc)
+	commenHandler  := handlers.NewCommentHandler(route, commentSvc, postSvc)
+	postHandler := handlers.NewPostHandler(route, postSvc)
+	membershipHandler := handlers.NewAuthHandler(route, authSvc)
+	userActHandler := handlers.NewUserActHandler(route, userActSvc)
 
 	commenHandler.RegisterRoute()
 	membershipHandler.RegisterRoute()

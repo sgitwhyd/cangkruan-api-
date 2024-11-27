@@ -12,13 +12,13 @@ import (
 )
 
 type userActHandler struct {
-	*gin.Engine
+	*gin.RouterGroup
 	service service.UserActService
 }
 
-func NewUserActHandler(api *gin.Engine, service service.UserActService) *userActHandler {
+func NewUserActHandler(api *gin.RouterGroup, service service.UserActService) *userActHandler {
 	return &userActHandler{
-		Engine: api,
+		RouterGroup: api,
 		service: service,
 	}
 }
