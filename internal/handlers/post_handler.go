@@ -5,10 +5,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"github.com/sgitwhyd/cangkruan-api/internal/middlewares"
 	"github.com/sgitwhyd/cangkruan-api/internal/model"
 	"github.com/sgitwhyd/cangkruan-api/internal/service"
+	"github.com/sgitwhyd/cangkruan-api/pkg/formater"
 )
 
 type handler struct {
@@ -30,41 +30,48 @@ func (h *handler) Get(c *gin.Context) {
 	pageStr := c.Query("page")
 
 	if pageSizeStr == "" || pageStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
-			"error": "need page and page size param",
-		})
+		error := gin.H{
+				"error": "need page and page size param",
+			}
+		response := formater.APIResponse("failed get post detail", http.StatusBadRequest, "error", error)
+			c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	limit, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error",
-		})
-		return
+			error := gin.H{
+				"error": err.Error(),
+			}
+			response := formater.APIResponse("failed get post detail", http.StatusInternalServerError, "error", error)
+			c.JSON(http.StatusBadRequest, response)
+			return
 	}
 
 	offset, err := strconv.Atoi(pageStr)
 		if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error",
-		})
-		return
+			error := gin.H{
+				"error": err.Error(),
+			}
+			response := formater.APIResponse("failed get post detail", http.StatusInternalServerError, "error", error)
+			c.JSON(http.StatusBadRequest, response)
+			return
 	}
 
 
 
 	posts, err := h.postService.FindAll(ctx, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return 
+			error := gin.H{
+				"error": err.Error(),
+			}
+			response := formater.APIResponse("failed get all post", http.StatusInternalServerError, "error", error)
+			c.JSON(http.StatusBadRequest, response)
+			return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": posts,
-	})
+	response := formater.APIResponse("success get all post", http.StatusOK, "success", posts)
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *handler) Make(c *gin.Context) {
@@ -73,26 +80,27 @@ func (h *handler) Make(c *gin.Context) {
 	var body model.CreatePostRequest
 	err := c.ShouldBindJSON(&body)
 	if err != nil {
-		log.Error().Err(err).Msgf("body required")
-			c.JSON(http.StatusUnprocessableEntity, gin.H{
+		error := gin.H{
 			"error": err.Error(),
-		})
+		}
+		response := formater.APIResponse("failed create post", http.StatusUnprocessableEntity, "error", error)
+		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
 	userID := c.MustGet("userID").(int64)
 	err = h.postService.Save(ctx, body, userID)
 	if err != nil {
-		log.Error().Err(err).Msgf("error create post by user_id: %d", userID)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
+		error := gin.H{
+			"error": err.Error(),
+		}
+		response := formater.APIResponse("failed create post", http.StatusInternalServerError, "error", error)
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"result": "Post Created",
-	})
+		response := formater.APIResponse("success create post", http.StatusOK, "success", nil)
+		c.JSON(http.StatusOK, response)
 }
 
 func (h *handler) Find(c *gin.Context) {
@@ -101,24 +109,27 @@ func (h *handler) Find(c *gin.Context) {
 	postIDStr := c.Param("post_id")
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error",
-		})
+		error := gin.H{
+			"error": err.Error(),
+		}
+		response := formater.APIResponse("invalid post id", http.StatusBadRequest, "error", error)
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	userID := c.GetInt64("userID")
-	posts, err := h.postService.FindByID(ctx,userID, int64(postID))
+	post, err := h.postService.FindByID(ctx,userID, int64(postID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		error := gin.H{
 			"error": err.Error(),
-		})
-		return 
+		}
+		response := formater.APIResponse("error getting post detail", http.StatusInternalServerError, "error", error)
+		c.JSON(http.StatusBadRequest, response)
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": posts,
-	})
+	response := formater.APIResponse("success getting post detail", http.StatusOK, "success", post)
+	c.JSON(http.StatusOK, response)
 
 }
 
