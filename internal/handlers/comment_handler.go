@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/sgitwhyd/cangkruan-api/internal/middlewares"
 	"github.com/sgitwhyd/cangkruan-api/internal/model"
 	"github.com/sgitwhyd/cangkruan-api/internal/service"
+	"github.com/sgitwhyd/cangkruan-api/pkg/formater"
 )
 
 type commentHandler struct {
@@ -32,9 +32,10 @@ func (h commentHandler) Make(c *gin.Context) {
 	postID, err := strconv.ParseInt(paramPostID, 10, 64)
 	if err != nil {
 		data := gin.H{
-			"error": errors.New("invalid post id").Error(),
+			"error": err.Error(),
 		}
-		c.JSON(http.StatusUnprocessableEntity, data)
+		response := formater.APIResponse("failed create comment", http.StatusBadRequest, "error", data)
+		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
@@ -44,7 +45,8 @@ func (h commentHandler) Make(c *gin.Context) {
 		data := gin.H{
 			"error": err.Error(),
 		}
-		c.JSON(http.StatusNotFound, data)
+		response := formater.APIResponse("failed create comment", http.StatusNotFound, "error", data)
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
@@ -54,22 +56,23 @@ func (h commentHandler) Make(c *gin.Context) {
 		data := gin.H{
 			"error": err.Error(),
 		}
-		c.JSON(http.StatusBadRequest, data)
+		response := formater.APIResponse("failed create comment", http.StatusUnprocessableEntity, "error", data)
+		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 	
 	err = h.service.Save(postID, ctx, body, userID)
 	if err != nil {
-		data := gin.H{
+			data := gin.H{
 			"error": err.Error(),
 		}
-		c.JSON(http.StatusInternalServerError, data)
+		response := formater.APIResponse("failed create comment", http.StatusInternalServerError, "error", data)
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
-	data := gin.H{
-			"data": "created",
-		}
-	c.JSON(http.StatusCreated, data)
+
+	response := formater.APIResponse("success create comment", http.StatusCreated, "success", nil)
+	c.JSON(http.StatusCreated, response)
 }
 
 func (h *commentHandler) RegisterRoute(){
