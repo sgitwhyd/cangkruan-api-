@@ -26,12 +26,17 @@ func NewUserActivityService(repository repository.UserActRepository) *userActSer
 }
 
 func (s *userActService) 	Create(ctx context.Context, req model.CreateUserActivityRequest, userID int64, postID int64) error {	
+
+	isLiked := 0
+	if req.IsLiked {
+		isLiked = 1
+	}
 	
 	now := time.Now()
 	model := model.UserActivityModel{
 		UserID: userID,
 		PostID: postID,
-		IsLiked: req.IsLiked,
+		IsLiked: isLiked,
 		CreatedAt: now,
 		UpdatedAt: now,
 		CreatedBy: strconv.FormatInt(userID, 10),
