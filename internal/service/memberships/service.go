@@ -15,7 +15,8 @@ type service struct {
 
 type MembershipService interface {
 	SignUp(ctx context.Context, req model.SignUpRequest) error
-	SignIn(ctx context.Context, req model.SignInRequest) (string, error)
+	SignIn(ctx context.Context, req model.SignInRequest) (string, string, error)
+	ValidateRefreshToken(ctx context.Context, userID int64, request model.RefreshTokenRequest) (string, error)
 }
 
 func NewService(cfg *configs.Config,membershipRepo memberships.Repository) *service {

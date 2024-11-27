@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sgitwhyd/cangkruan-api/internal/middlewares"
 	model "github.com/sgitwhyd/cangkruan-api/internal/model"
 	service "github.com/sgitwhyd/cangkruan-api/internal/service/memberships"
 )
@@ -19,6 +20,33 @@ func NewHandler(api *gin.Engine, membershipSvc service.MembershipService) *Handl
 		Engine: api,
 		membershipSvc: membershipSvc,
 	}
+}
+
+func (h *Handler) Refresh(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var request model.RefreshTokenRequest
+	err := c.ShouldBindJSON(&request)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	
+	userID := c.GetInt64("userID")
+	accessToken, err := h.membershipSvc.ValidateRefreshToken(ctx, userID, request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.RefreshTokenResponse{
+		AccessToken: accessToken,
+	})
+
 }
 
 func (h *Handler) SignUp(c *gin.Context) {
@@ -61,7 +89,7 @@ func (h *Handler) SignIn(c *gin.Context){
 		return
 	}
 
-	token, err := h.membershipSvc.SignIn(ctx, body)
+	token, refToken, err := h.membershipSvc.SignIn(ctx, body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -71,6 +99,7 @@ func (h *Handler) SignIn(c *gin.Context){
 
 	data := &model.SignInResponse{
 		AccessToken: token,
+		RefreshToken: refToken,
 	}
 	c.JSON(http.StatusOK, data)
 }
@@ -80,4 +109,7 @@ func (h *Handler) RegisterRoute(){
 
 	route.POST("/signup", h.SignUp)
 	route.POST("/signin", h.SignIn)
+
+
+	h.POST("/memberships/refresh", middlewares.AuthRefreshMiddleware(), h.Refresh)
 }
