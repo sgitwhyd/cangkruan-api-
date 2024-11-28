@@ -3,10 +3,8 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"github.com/sgitwhyd/cangkruan-api/internal/middlewares"
 	"github.com/sgitwhyd/cangkruan-api/internal/model"
 	"github.com/sgitwhyd/cangkruan-api/internal/service"
@@ -16,26 +14,41 @@ import (
 type userActHandler struct {
 	*gin.RouterGroup
 	service service.UserActService
+	postService service.PostService
 }
 
-func NewUserActHandler(api *gin.RouterGroup, service service.UserActService) *userActHandler {
+func NewUserActHandler(api *gin.RouterGroup, service service.UserActService, postService service.PostService) *userActHandler {
 	return &userActHandler{
 		RouterGroup: api,
 		service: service,
+		postService: postService,
 	}
 }
 
 func (h *userActHandler) LikePost(c *gin.Context) {
 	ctx := c.Request.Context()
+	userID := c.GetInt64("userID")
 
-	paramPostID := c.Param("post_id")
-	postID, err := strconv.ParseInt(paramPostID, 10, 64)
+
+	var params model.GetPostIdParam
+
+	err := c.ShouldBindUri(&params)
 	if err != nil {
 		data := gin.H{
 			"error": err.Error(),
 		}
 		response := formater.APIResponse("failed", http.StatusBadRequest, "error", data)
 		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	post, err := h.postService.FindByID(ctx, userID, int64(params.PostID))
+	if err != nil {
+			data := gin.H{
+			"error": err.Error(),
+		}
+		response := formater.APIResponse("failed", http.StatusNotFound, "error", data)
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
@@ -55,12 +68,8 @@ func (h *userActHandler) LikePost(c *gin.Context) {
 		msg = "unlike post"
 	}
 
-	log.Info().Msgf("body %v", body)
 
-
-	userID := c.GetInt64("userID")
-
-	err = h.service.Create(ctx, body, userID, postID)
+	err = h.service.Create(ctx, body, userID, post.Post.ID)
 	if err != nil {
 		data := gin.H{
 			"error": err.Error(),
