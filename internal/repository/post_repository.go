@@ -15,7 +15,7 @@ type postRepository struct {
 }
 
 type PostRepository interface {
-	GetAll(ctx context.Context, limit int, offset int)(model.GetAllPostResponse, error) 
+	GetAll(ctx context.Context, limit int, offset int, userID int64)(model.GetAllPostResponse, error) 
 	Create(ctx context.Context, req model.PostModel) error
 	FindByID(ctx context.Context, userID, postID int64) (*model.Post, error)
 }
@@ -26,10 +26,39 @@ func NewPostRepository(db *sql.DB) *postRepository {
 	}
 }
 
-func (r *postRepository) GetAll(ctx context.Context, limit int, offset int)(model.GetAllPostResponse, error) {
+func (r *postRepository) GetAll(ctx context.Context, limit int, offset int, userID int64)(model.GetAllPostResponse, error) {
 	var posts model.GetAllPostResponse
-	query := `SELECT p.id, p.user_id, p.title, p.content, p.hashtags, p.created_at, p.updated_at, p.created_by, p.updated_by, u.username FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.updated_at DESC LIMIT ? OFFSET ?`
-	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	query := `
+		SELECT 
+			p.id, 
+			p.user_id, 
+			p.title, 
+			p.content, 
+			p.hashtags, 
+			p.created_at, 
+			p.updated_at, 
+			p.created_by, 
+			p.updated_by, 
+			u.username,
+			COALESCE(uv.is_liked, 0) AS is_liked
+		FROM 
+			posts p 
+		JOIN 
+			users u 
+		ON 
+			p.user_id = u.id 
+		LEFT JOIN 
+			user_activities uv
+		ON 
+			uv.post_id = p.id 
+		AND 
+			uv.user_id = ?
+		ORDER BY 
+			p.updated_at 
+		DESC LIMIT ? OFFSET ?`
+
+	rows, 
+		err := r.db.QueryContext(ctx, query, userID, limit, offset)
 	if err != nil {
 		return posts, err
 	}
@@ -48,8 +77,9 @@ func (r *postRepository) GetAll(ctx context.Context, limit int, offset int)(mode
 		var (
 			post model.PostModel
 			username string
+			isLiked bool
 		)
-		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Hashtags, &post.CreatedAt, &post.UpdatedAt, &post.CreatedBy, &post.UpdatedBy, &username)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Hashtags, &post.CreatedAt, &post.UpdatedAt, &post.CreatedBy, &post.UpdatedBy, &username, &isLiked)
 		if err != nil {
 			if err != sql.ErrNoRows {
 				return posts, err
@@ -63,6 +93,7 @@ func (r *postRepository) GetAll(ctx context.Context, limit int, offset int)(mode
 			Title: post.Title,
 			Username: username,
 			Content: post.Content,
+			IsLike: isLiked,
 			Hashtags: strings.Split(post.Hashtags, ","),
 		})
 	}

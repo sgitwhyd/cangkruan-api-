@@ -25,6 +25,7 @@ func NewPostHandler(api *gin.RouterGroup, postService service.PostService) *hand
 
 func (h *handler) Get(c *gin.Context) {
 	ctx := c.Request.Context()
+	userID := c.GetInt64("userID")
 
 	pageSizeStr := c.Query("pageSize")
 	pageStr := c.Query("page")
@@ -43,7 +44,7 @@ func (h *handler) Get(c *gin.Context) {
 			error := gin.H{
 				"error": err.Error(),
 			}
-			response := formater.APIResponse("failed get post detail", http.StatusInternalServerError, "error", error)
+			response := formater.APIResponse("failed get post detail", http.StatusBadRequest, "error", error)
 			c.JSON(http.StatusBadRequest, response)
 			return
 	}
@@ -53,14 +54,12 @@ func (h *handler) Get(c *gin.Context) {
 			error := gin.H{
 				"error": err.Error(),
 			}
-			response := formater.APIResponse("failed get post detail", http.StatusInternalServerError, "error", error)
+			response := formater.APIResponse("failed get post detail", http.StatusBadRequest, "error", error)
 			c.JSON(http.StatusBadRequest, response)
 			return
 	}
 
-
-
-	posts, err := h.postService.FindAll(ctx, limit, offset)
+	posts, err := h.postService.FindAll(ctx, limit, offset, userID)
 	if err != nil {
 			error := gin.H{
 				"error": err.Error(),
@@ -106,19 +105,20 @@ func (h *handler) Make(c *gin.Context) {
 func (h *handler) Find(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	postIDStr := c.Param("post_id")
-	postID, err := strconv.Atoi(postIDStr)
+	var postId model.GetPostIdParam
+
+	err := c.ShouldBindUri(&postId)
 	if err != nil {
 		error := gin.H{
 			"error": err.Error(),
 		}
-		response := formater.APIResponse("invalid post id", http.StatusBadRequest, "error", error)
+		response := formater.APIResponse("error getting post detail", http.StatusBadRequest, "error", error)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	userID := c.GetInt64("userID")
-	post, err := h.postService.FindByID(ctx,userID, int64(postID))
+	post, err := h.postService.FindByID(ctx,userID, int64(postId.PostID))
 	if err != nil {
 		error := gin.H{
 			"error": err.Error(),
@@ -139,5 +139,5 @@ func (h *handler) RegisterRoute(){
 
 	route.POST("/", h.Make)
 	route.GET("/:post_id", h.Find)
-	h.GET("/posts", h.Get)
+	route.GET("/", h.Get)
 }
