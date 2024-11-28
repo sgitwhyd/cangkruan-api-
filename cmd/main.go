@@ -57,7 +57,7 @@ func main() {
 	commenHandler  := handlers.NewCommentHandler(route, commentSvc, postSvc)
 	postHandler := handlers.NewPostHandler(route, postSvc)
 	membershipHandler := handlers.NewAuthHandler(route, authSvc)
-	userActHandler := handlers.NewUserActHandler(route, userActSvc)
+	userActHandler := handlers.NewUserActHandler(route, userActSvc, postSvc)
 
 	commenHandler.RegisterRoute()
 	membershipHandler.RegisterRoute()
