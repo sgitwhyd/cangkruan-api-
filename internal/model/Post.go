@@ -20,6 +20,10 @@ type (
 		Content   string    `json:"content" binding:"required"`
 		Hashtags    []string    `json:"hashtags" binding:"required"`
 	}
+
+	GetPostIdParam struct {
+		PostID int `uri:"post_id" binding:"required"`
+	}
 )
 
 type (

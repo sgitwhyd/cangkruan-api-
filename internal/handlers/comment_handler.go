@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sgitwhyd/cangkruan-api/internal/middlewares"
@@ -28,8 +27,8 @@ func NewCommentHandler(api *gin.RouterGroup, service service.CommentService, pos
 func (h commentHandler) Make(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	paramPostID := c.Param("post_id")
-	postID, err := strconv.ParseInt(paramPostID, 10, 64)
+	var params model.GetPostIdParam
+	err := c.ShouldBindUri(&params)
 	if err != nil {
 		data := gin.H{
 			"error": err.Error(),
@@ -40,7 +39,7 @@ func (h commentHandler) Make(c *gin.Context) {
 	}
 
 	userID := c.GetInt64("userID")
-	_, err = h.postSvc.FindByID(ctx, userID, postID)
+	_, err = h.postSvc.FindByID(ctx, userID, int64(params.PostID))
 	if err != nil {
 		data := gin.H{
 			"error": err.Error(),
@@ -61,7 +60,7 @@ func (h commentHandler) Make(c *gin.Context) {
 		return
 	}
 	
-	err = h.service.Save(postID, ctx, body, userID)
+	err = h.service.Save(int64(params.PostID), ctx, body, userID)
 	if err != nil {
 			data := gin.H{
 			"error": err.Error(),
