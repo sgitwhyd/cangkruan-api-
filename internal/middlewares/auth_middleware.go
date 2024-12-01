@@ -11,7 +11,7 @@ import (
 )
 
 func AuthMiddleware() gin.HandlerFunc {
-	secretKey := configs.Get().Service.SecretJWT
+	secretKey := configs.Get().SecretJWT
 
 	return func(ctx *gin.Context) {
 		header :=  ctx.Request.Header.Get("Authorization")
@@ -40,7 +40,7 @@ func AuthMiddleware() gin.HandlerFunc {
 }
 
 func AuthRefreshMiddleware() gin.HandlerFunc {
-	secretKey := configs.Get().Service.SecretJWT
+	secretKey := configs.Get().SecretJWT
 
 	return func(ctx *gin.Context) {
 		header :=  ctx.Request.Header.Get("Authorization")

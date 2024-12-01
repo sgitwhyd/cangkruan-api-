@@ -47,11 +47,11 @@ func getDefaultConfigFolder() []string {
 }
 
 func getDefaultConfigFile() string {
-	return "config"
+	return "app"
 }
 
 func getDefaultConfigType() string {
-	return "yaml"
+	return "env"
 }
 
 func WithConfigFolder(configFolders []string) Option {

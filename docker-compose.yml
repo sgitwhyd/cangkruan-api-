@@ -1,4 +1,4 @@
-version: "1"
+version: "3.9" # Updated version for better features and compatibility
 
 services:
   db:
@@ -7,7 +7,41 @@ services:
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_USER=root
-      - MYSQL_ROOT_PASSWORD=secret
+      MYSQL_ROOT_USERNAME: root
+      MYSQL_ROOT_PASSWORD: secret # Fix environment variable name
+      MYSQL_DATABASE: fs_forum_api # Optional: Add initial database creation
     volumes:
-      - "/D:/LEARN/DEVELOPMENT/mysql:/var/lib/mysql"
+      - ./mysql_data:/var/lib/mysql # Adjusted path for portability
+    networks:
+      - cangkruan-network
+    command: --skip-name-resolve
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      timeout: 10s
+
+  app:
+    build:
+      context: . # Dockerfile is in the current directory
+      dockerfile: Dockerfile
+    container_name: cangkruan-api
+    ports:
+      - "9876:9876"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cangkruan-network
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=secret
+      - DB_NAME=fs_forum_api # Match the created database
+    volumes:
+      - ./internal/configs/app.env:/app/app.env
+networks:
+  cangkruan-network:
+    driver: bridge

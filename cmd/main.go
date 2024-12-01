@@ -8,6 +8,7 @@ import (
 	"github.com/sgitwhyd/cangkruan-api/internal/handlers"
 	"github.com/sgitwhyd/cangkruan-api/internal/repository"
 	"github.com/sgitwhyd/cangkruan-api/internal/service"
+	"github.com/sgitwhyd/cangkruan-api/pkg/formater"
 	"github.com/sgitwhyd/cangkruan-api/pkg/internalsql"
 )
 
@@ -15,8 +16,8 @@ import (
 func main() {
 	err := configs.Init(
 		configs.WithConfigFolder([]string{"./internal/configs"}),
-		configs.WithConfigFile("config"),
-		configs.WithConfigType("yaml"),
+		configs.WithConfigFile("app"),
+		configs.WithConfigType("env"),
 	)
 
 	if err != nil {
@@ -28,7 +29,7 @@ func main() {
 	cfg := configs.Get()
 	log.Println(cfg)
 
-	db, err := internalsql.Connect(cfg.Database.DataSourceName)
+	db, err := internalsql.Connect(cfg.Database)
 	if err != nil {
 		log.Fatal("gagal inisiasi database", err)
 		return
@@ -64,5 +65,10 @@ func main() {
 	postHandler.RegisterRoute()
 	userActHandler.RegisterRoute()
 
-	r.Run(cfg.Service.Port) // listen and serve on 0.0.0.0:8080
+	r.GET("/", func(ctx *gin.Context) {
+		response := formater.APIResponse("App is online", 200, "success", nil)
+		ctx.JSON(200, response)
+	})
+
+	r.Run(cfg.Port) // listen and serve on 0.0.0.0:8080
 }

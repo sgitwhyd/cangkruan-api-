@@ -81,7 +81,7 @@ func (s *authService) SignIn(ctx context.Context, req model.SignInRequest) (stri
 		return "", "", errors.New("email or password is invalid")
 	}
 
-	token, err := jwt.CreateToken(user.ID, user.Username, s.cfg.Service.SecretJWT)
+	token, err := jwt.CreateToken(user.ID, user.Username, s.cfg.SecretJWT)
 	if err != nil {
 		return "", "", err
 	}
@@ -139,7 +139,7 @@ func (s *authService) ValidateRefreshToken(ctx context.Context, userID int64, re
 		return "", nil
 	}
 
-	accessToken, err := jwt.CreateToken(userID, user.Username, s.cfg.Service.SecretJWT)
+	accessToken, err := jwt.CreateToken(userID, user.Username, s.cfg.SecretJWT)
 	if err != nil {
 		log.Error().Err(err).Msgf("service: failed generate jwt token user_id: %d", userID)
 		return  "", err
