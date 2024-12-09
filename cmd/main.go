@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sgitwhyd/cangkruan-api/internal/configs"
 	"github.com/sgitwhyd/cangkruan-api/internal/handlers"
@@ -43,6 +45,21 @@ func main() {
 	route:= r.Group("/api/v1/")
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // Adjust to your frontend URLs
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	r.Use(func(c *gin.Context) {
+    c.Next()
+    if len(c.Errors) > 0 {
+        log.Println("Middleware Error:", c.Errors)
+    }
+})
 
 	
 	postRepo := repository.NewPostRepository(db)
