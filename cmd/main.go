@@ -16,6 +16,7 @@ import (
 
 // BasePath /api/v1
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 	err := configs.Init(
 		configs.WithConfigFolder([]string{"./internal/configs"}),
 		configs.WithConfigFile("app"),
@@ -45,6 +46,8 @@ func main() {
 	route:= r.Group("/api/v1/")
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+
+
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"}, // Adjust to your frontend URLs
