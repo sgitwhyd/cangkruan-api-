@@ -23,10 +23,21 @@ type AuthService interface {
 	SignUp(ctx context.Context, req model.SignUpRequest) error
 	SignIn(ctx context.Context, req model.SignInRequest) (string, string, error)
 	ValidateRefreshToken(ctx context.Context, userID int64, request model.RefreshTokenRequest) (string, error)
+	GetMe(ctx context.Context, userID int64)(*model.UserModel, error)
 }
 
 func NewAuthService(cfg *configs.Config, userRepo repository.UserRepository) *authService {
 	return &authService{cfg, userRepo}
+}
+
+func (s *authService) GetMe(ctx context.Context, userID int64)(*model.UserModel, error) {
+
+	user, err := s.repository.GetUser(ctx, "", "", userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *authService) SignUp(ctx context.Context, req model.SignUpRequest) error {

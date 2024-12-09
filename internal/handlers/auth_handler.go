@@ -22,6 +22,28 @@ func NewAuthHandler(api *gin.RouterGroup, authSvc service.AuthService) *authHand
 	}
 }
 
+func (h *authHandler) GetUser(c *gin.Context){
+	ctx := c.Request.Context()
+
+	userID := c.GetInt64("userID")
+
+	user, err := h.service.GetMe(ctx, userID)
+	if err != nil {
+		error := gin.H{
+			"error" : err.Error(),
+		}
+		response := formater.APIResponse("Failed Get User", http.StatusInternalServerError, "error", error)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	response := formater.APIResponse("Success Get User", http.StatusOK, "success", gin.H{
+		"username": user.Username,
+		"email": user.Email,
+	})
+	c.JSON(http.StatusOK, response)
+}
+
 func (h *authHandler) Refresh(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -120,6 +142,7 @@ func (h *authHandler) RegisterRoute(){
 
 	route.POST("/signup", h.SignUp)
 	route.POST("/signin", h.SignIn)
+	route.GET("/me", middlewares.AuthMiddleware(), h.GetUser)
 
 
 	h.POST("/auth/refresh", middlewares.AuthRefreshMiddleware(), h.Refresh)
